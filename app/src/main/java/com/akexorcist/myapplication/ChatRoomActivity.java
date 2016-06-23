@@ -16,6 +16,7 @@ import com.akexorcist.myapplication.adpter.MessageAdapter;
 import com.akexorcist.myapplication.common.BaseActivity;
 import com.akexorcist.myapplication.constant.FirebaseKey;
 import com.akexorcist.myapplication.manager.EventTrackerManager;
+import com.akexorcist.myapplication.model.ChatRoom;
 import com.akexorcist.myapplication.model.MessageItem;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -38,7 +39,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     private ImageButton btnSendMessage;
     private RecyclerView rvMessage;
     private MessageAdapter messageAdapter;
-    private ArrayList<MessageItem> messageItemList;
+    private ChatRoom chatRoom;
     private DatabaseReference messageDatabaseReference;
 
 
@@ -61,11 +62,23 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     }
 
     private void setupView() {
+        disableChat();
         btnSendMessage.setOnClickListener(this);
-        tvUserName.setText(String.format("%s %s", getString(R.string.sign_in_as), getUsername()));
+        tvUserName.setText(String.format("%s %s", getString(R.string.sign_in_as), getCurrentUserEmail()));
+    }
 
-        messageItemList = new ArrayList<>();
-        messageAdapter = new MessageAdapter(messageItemList, FirebaseAuth.getInstance().getCurrentUser());
+    private void disableChat() {
+        etMessage.setEnabled(false);
+        btnSendMessage.setEnabled(false);
+    }
+
+    private void enableChat() {
+        etMessage.setEnabled(true);
+        btnSendMessage.setEnabled(true);
+    }
+
+    private void setupChatList(ChatRoom chatRoom) {
+        messageAdapter = new MessageAdapter(chatRoom, getCurrentUserEmail());
         rvMessage.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         rvMessage.setAdapter(messageAdapter);
     }
@@ -73,7 +86,6 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     private void setupRealtimeDatabase() {
         DatabaseReference rootDatabaseReference = FirebaseDatabase.getInstance().getReference();
         messageDatabaseReference = rootDatabaseReference.child(FirebaseKey.CHAT_DATABASE_REFERENCE_KEY);
-        messageDatabaseReference.limitToFirst(10);
         messageDatabaseReference.addValueEventListener(messageValueEventListener);
     }
 
@@ -102,14 +114,10 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         }
     }
 
-    private String getUsername() {
+    private String getCurrentUserEmail() {
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         if (firebaseUser != null) {
-            if (firebaseUser.getDisplayName() == null || firebaseUser.getDisplayName().isEmpty()) {
-                return firebaseUser.getEmail();
-            } else {
-                return firebaseUser.getDisplayName();
-            }
+            return firebaseUser.getEmail();
         }
         return "";
     }
@@ -123,9 +131,8 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     private ValueEventListener messageValueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
-            MessageItem messageItem = dataSnapshot.getValue(MessageItem.class);
-            messageItemList.add(messageItem);
-            messageAdapter.notifyDataSetChanged();
+            ChatRoom chatRoom = dataSnapshot.getValue(ChatRoom.class);
+            updateChatList(chatRoom);
         }
 
         @Override
@@ -133,6 +140,21 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
             showPopupMessage(R.string.something_error_in_realtime_database);
         }
     };
+
+    private void updateChatList(ChatRoom chatRoom) {
+        if (chatRoom == null) {
+            chatRoom = new ChatRoom();
+            chatRoom.setMessageItemList(new ArrayList<MessageItem>());
+        }
+        if (this.chatRoom == null) {
+            setupChatList(chatRoom);
+            enableChat();
+            this.chatRoom = chatRoom;
+        } else {
+            this.chatRoom.setMessageItemList(chatRoom.getMessageItemList());
+        }
+        messageAdapter.notifyDataSetChanged();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -198,8 +220,11 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     }
 
     private void sendMessageToRealtimeDatabase(String message) {
-        MessageItem messageItem = new MessageItem(message, getUsername());
-        messageDatabaseReference.setValue(messageItem);
+        if (chatRoom != null) {
+            MessageItem messageItem = new MessageItem(message, getCurrentUserEmail());
+            chatRoom.addMessageItem(messageItem);
+            messageDatabaseReference.setValue(chatRoom);
+        }
     }
 
     private boolean isMessageValidated(String message) {

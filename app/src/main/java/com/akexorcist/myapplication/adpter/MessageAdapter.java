@@ -8,10 +8,8 @@ import android.view.ViewGroup;
 import com.akexorcist.myapplication.R;
 import com.akexorcist.myapplication.adpter.holder.OtherMessageViewHolder;
 import com.akexorcist.myapplication.adpter.holder.UserMessageViewHolder;
+import com.akexorcist.myapplication.model.ChatRoom;
 import com.akexorcist.myapplication.model.MessageItem;
-import com.google.firebase.auth.FirebaseUser;
-
-import java.util.ArrayList;
 
 /**
  * Created by Akexorcist on 6/20/2016 AD.
@@ -20,12 +18,12 @@ import java.util.ArrayList;
 public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int TYPE_OTHER = 0;
     private static final int TYPE_USER = 1;
-    private ArrayList<MessageItem> messageItemList;
-    private FirebaseUser currentFirebaseUser;
+    private ChatRoom chatRoom;
+    private String currentUser;
 
-    public MessageAdapter(ArrayList<MessageItem> messageItemList, FirebaseUser currentFirebaseUser) {
-        this.messageItemList = messageItemList;
-        this.currentFirebaseUser = currentFirebaseUser;
+    public MessageAdapter(ChatRoom chatRoom, String currentUser) {
+        this.chatRoom = chatRoom;
+        this.currentUser = currentUser;
     }
 
     @Override
@@ -41,8 +39,8 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public int getItemViewType(int position) {
-        String user = messageItemList.get(position).getUser();
-        if (user.equalsIgnoreCase(currentFirebaseUser.getEmail()) || user.equalsIgnoreCase(currentFirebaseUser.getDisplayName())) {
+        String user = chatRoom.getMessageItemList().get(position).getUser();
+        if (user.equalsIgnoreCase(currentUser)) {
             return TYPE_USER;
         }
         return TYPE_OTHER;
@@ -50,7 +48,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        MessageItem messageItem = messageItemList.get(position);
+        MessageItem messageItem = chatRoom.getMessageItemList().get(position);
         if (holder instanceof UserMessageViewHolder) {
             UserMessageViewHolder userMessageViewHolder = (UserMessageViewHolder) holder;
             userMessageViewHolder.tvUserName.setText(R.string.you);
@@ -64,6 +62,6 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public int getItemCount() {
-        return messageItemList.size();
+        return chatRoom.getMessageItemList().size();
     }
 }

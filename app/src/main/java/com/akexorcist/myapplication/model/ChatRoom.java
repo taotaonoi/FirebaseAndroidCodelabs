@@ -1,34 +1,32 @@
 package com.akexorcist.myapplication.model;
 
+import java.util.List;
+
 /**
  * Created by Akexorcist on 6/20/2016 AD.
  */
 
 public class ChatRoom {
-    String text;
-    String user;
+    List<MessageItem> messageItemList;
 
     public ChatRoom() {
     }
 
-    public ChatRoom(String text, String user) {
-        this.text = text;
-        this.user = user;
+    public ChatRoom(List<MessageItem> messageItemList) {
+        this.messageItemList = messageItemList;
     }
 
-    public String getText() {
-        return text;
+    public List<MessageItem> getMessageItemList() {
+        return messageItemList;
     }
 
-    public void setText(String text) {
-        this.text = text;
+    public void setMessageItemList(List<MessageItem> messageItemList) {
+        this.messageItemList = messageItemList;
     }
 
-    public String getUser() {
-        return user;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
+    public void addMessageItem(MessageItem messageItem) {
+        if(messageItemList != null) {
+            messageItemList.add(messageItem);
+        }
     }
 }
