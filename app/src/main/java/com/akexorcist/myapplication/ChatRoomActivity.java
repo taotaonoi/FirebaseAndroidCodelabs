@@ -16,6 +16,7 @@ import com.akexorcist.myapplication.adpter.MessageAdapter;
 import com.akexorcist.myapplication.common.BaseActivity;
 import com.akexorcist.myapplication.constant.FirebaseKey;
 import com.akexorcist.myapplication.manager.EventTrackerManager;
+import com.akexorcist.myapplication.manager.VibrationManager;
 import com.akexorcist.myapplication.model.ChatRoom;
 import com.akexorcist.myapplication.model.MessageItem;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -154,6 +155,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
             this.chatRoom.setMessageItemList(chatRoom.getMessageItemList());
         }
         messageAdapter.notifyDataSetChanged();
+        VibrationManager.vibrate(this);
     }
 
     @Override
