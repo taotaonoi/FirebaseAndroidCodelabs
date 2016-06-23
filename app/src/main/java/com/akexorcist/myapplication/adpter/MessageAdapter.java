@@ -20,6 +20,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private static final int TYPE_USER = 1;
     private ChatRoom chatRoom;
     private String currentUser;
+    private OnMessageItemLongClickListener messageItemLongClickListener;
 
     public MessageAdapter(ChatRoom chatRoom, String currentUser) {
         this.chatRoom = chatRoom;
@@ -47,7 +48,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
         MessageItem messageItem = chatRoom.getMessageItemList().get(position);
         if (holder instanceof UserMessageViewHolder) {
             UserMessageViewHolder userMessageViewHolder = (UserMessageViewHolder) holder;
@@ -58,10 +59,27 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             otherMessageViewHolder.tvUserName.setText(messageItem.getUser());
             otherMessageViewHolder.tvMessage.setText(messageItem.getText());
         }
+        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                if (messageItemLongClickListener != null) {
+                    messageItemLongClickListener.onMessageItemLongClick(position);
+                }
+                return true;
+            }
+        });
+    }
+
+    public void setOnItemLongClickListener(OnMessageItemLongClickListener listener) {
+        messageItemLongClickListener = listener;
     }
 
     @Override
     public int getItemCount() {
         return chatRoom.getMessageItemList().size();
+    }
+
+    public interface OnMessageItemLongClickListener {
+        void onMessageItemLongClick(int position);
     }
 }

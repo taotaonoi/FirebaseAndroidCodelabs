@@ -25,6 +25,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.crash.FirebaseCrash;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -33,10 +34,11 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.akexorcist.myapplication.R.id.menu_change_name;
 
-public class ChatRoomActivity extends BaseActivity implements View.OnClickListener {
+public class ChatRoomActivity extends BaseActivity implements View.OnClickListener, MessageAdapter.OnMessageItemLongClickListener {
     private TextView tvUserName;
     private EditText etMessage;
     private ImageButton btnSendMessage;
@@ -56,6 +58,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         setupView();
         setupRealtimeDatabase();
         setupRemoteConfig();
+        FirebaseCrash.report(new Exception("My first Android non-fatal error"));
     }
 
     private void bindView() {
@@ -135,6 +138,11 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         }
     }
 
+    @Override
+    public void onMessageItemLongClick(int position) {
+        removeMessageItemByPosition(position);
+    }
+
     private ValueEventListener messageValueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
@@ -155,7 +163,6 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         }
         if (this.chatRoom == null) {
             setupChatList(chatRoom);
-            hideLoading();
             this.chatRoom = chatRoom;
         } else {
             this.chatRoom.setMessageItemList(chatRoom.getMessageItemList());
@@ -163,6 +170,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         messageAdapter.notifyDataSetChanged();
         VibrationManager.vibrate(this);
         scrollChatListToLastChat();
+        hideLoading();
     }
 
     private void changeName() {
@@ -174,15 +182,28 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         if (Utility.isMessageValidated(message)) {
             clearMessageBox();
             hideKeyboard();
-            sendMessageToRealtimeDatabase(message);
+            addNewMessageToMessageList(message);
         }
     }
 
-    private void sendMessageToRealtimeDatabase(String message) {
+    private void addNewMessageToMessageList(String message) {
         if (chatRoom != null) {
             MessageItem messageItem = new MessageItem(message, getCurrentUserEmail());
             chatRoom.addMessageItem(messageItem);
-            messageDatabaseReference.setValue(chatRoom);
+            updateMessageDatabaseReference(chatRoom);
+        }
+    }
+
+    private void updateMessageDatabaseReference(ChatRoom chatRoom) {
+        messageDatabaseReference.setValue(chatRoom);
+    }
+
+    private void removeMessageItemByPosition(int position) {
+        List<MessageItem> messageItemList = chatRoom.getMessageItemList();
+        if (messageItemList != null && messageItemList.size() > position) {
+            messageItemList.remove(position);
+            updateMessageDatabaseReference(chatRoom);
+            showLoading();
         }
     }
 
@@ -239,6 +260,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
 
     private void setupChatList(ChatRoom chatRoom) {
         messageAdapter = new MessageAdapter(chatRoom, getCurrentUserEmail());
+        messageAdapter.setOnItemLongClickListener(this);
         rvMessage.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         rvMessage.setAdapter(messageAdapter);
     }
