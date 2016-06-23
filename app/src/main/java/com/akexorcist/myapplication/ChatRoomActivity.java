@@ -156,6 +156,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         }
         messageAdapter.notifyDataSetChanged();
         VibrationManager.vibrate(this);
+        scrollChatListToLastChat();
     }
 
     @Override
@@ -237,5 +238,9 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         if (etMessage != null) {
             etMessage.setText("");
         }
+    }
+
+    private void scrollChatListToLastChat() {
+        rvMessage.smoothScrollToPosition(rvMessage.getAdapter().getItemCount());
     }
 }
