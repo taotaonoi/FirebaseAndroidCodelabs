@@ -17,6 +17,7 @@ import com.akexorcist.myapplication.adpter.MessageAdapter;
 import com.akexorcist.myapplication.common.BaseActivity;
 import com.akexorcist.myapplication.constant.FirebaseKey;
 import com.akexorcist.myapplication.manager.EventTrackerManager;
+import com.akexorcist.myapplication.manager.SoundManager;
 import com.akexorcist.myapplication.manager.VibrationManager;
 import com.akexorcist.myapplication.model.ChatRoom;
 import com.akexorcist.myapplication.model.MessageItem;
@@ -168,7 +169,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
             this.chatRoom.setMessageItemList(chatRoom.getMessageItemList());
         }
         messageAdapter.notifyDataSetChanged();
-        VibrationManager.vibrate(this);
+        playMessageIncomingEffect();
         scrollChatListToLastChat();
         hideLoading();
     }
@@ -263,5 +264,11 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         messageAdapter.setOnItemLongClickListener(this);
         rvMessage.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         rvMessage.setAdapter(messageAdapter);
+    }
+
+    private void playMessageIncomingEffect() {
+        String filePath = "effect/incoming_message.mp3";
+        SoundManager.getInstance().play(SoundManager.getAssetFileDescriptor(this, filePath), null);
+        VibrationManager.vibrate(this);
     }
 }
