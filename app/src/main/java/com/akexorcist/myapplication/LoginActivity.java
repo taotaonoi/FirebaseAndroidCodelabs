@@ -9,6 +9,8 @@ import android.widget.EditText;
 import com.akexorcist.myapplication.common.BaseActivity;
 import com.akexorcist.myapplication.manager.DialogManager;
 import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -25,7 +27,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
 
         bindView();
         setupView();
-        setupThing();
+        checkAlreadyLoggedIn();
     }
 
     private void bindView() {
@@ -40,21 +42,10 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         btnSignUp.setOnClickListener(this);
     }
 
-    private void setupThing() {
-
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        FirebaseAuth.getInstance().addAuthStateListener(mAuthListener);
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (mAuthListener != null) {
-            FirebaseAuth.getInstance().removeAuthStateListener(mAuthListener);
+    private void checkAlreadyLoggedIn() {
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser != null) {
+            goToChatRoom();
         }
     }
 
@@ -72,21 +63,20 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         }
     }
 
-    private FirebaseAuth.AuthStateListener mAuthListener = new FirebaseAuth.AuthStateListener() {
-        @Override
-        public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-            FirebaseUser user = firebaseAuth.getCurrentUser();
-            if (user != null) {
-                dismissLoadingDialog();
-                goToChatRoom();
-            }
-        }
-    };
-
     private void signUp(@NonNull String username, @NonNull String password) {
         if (isUsernameAndPasswordValidated(username, password)) {
             showLoadingDialog();
             FirebaseAuth.getInstance().createUserWithEmailAndPassword(username, password)
+                    .addOnSuccessListener(new OnSuccessListener<AuthResult>() {
+                        @Override
+                        public void onSuccess(AuthResult authResult) {
+                            FirebaseUser user = authResult.getUser();
+                            if (user != null) {
+                                dismissLoadingDialog();
+                                goToChatRoom();
+                            }
+                        }
+                    })
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
@@ -101,6 +91,16 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         if (isUsernameAndPasswordValidated(username, password)) {
             showLoadingDialog();
             FirebaseAuth.getInstance().signInWithEmailAndPassword(username, password)
+                    .addOnSuccessListener(new OnSuccessListener<AuthResult>() {
+                        @Override
+                        public void onSuccess(AuthResult authResult) {
+                            FirebaseUser user = authResult.getUser();
+                            if (user != null) {
+                                dismissLoadingDialog();
+                                goToChatRoom();
+                            }
+                        }
+                    })
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
@@ -128,7 +128,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
             showBottomMessage(R.string.please_insert_username_password);
             return false;
         }
-        if (username.length() < 6 && password.length() < 6) {
+        if (username.length() < 6 || password.length() < 6) {
             showBottomMessage(R.string.username_password_contain_at_least_6_characters);
             return false;
         }
