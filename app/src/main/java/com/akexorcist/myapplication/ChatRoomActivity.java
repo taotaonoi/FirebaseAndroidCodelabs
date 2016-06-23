@@ -170,6 +170,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         }
         messageAdapter.notifyDataSetChanged();
         playMessageIncomingEffect();
+        scrollChatListToLastChat();
         hideLoading();
     }
 
@@ -224,6 +225,10 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         if (etMessage != null) {
             etMessage.setText("");
         }
+    }
+
+    private void scrollChatListToLastChat() {
+        rvMessage.smoothScrollToPosition(rvMessage.getAdapter().getItemCount());
     }
 
     private void checkUserAuthentication() {
