@@ -14,4 +14,7 @@
     <string name="sign_in_as">Sign in as</string>
     <string name="you">You</string>
     <string name="something_error_in_realtime_database">Something error in realtime database.</string>
+    <string name="sign_up">Sign up</string>
+    <string name="sign_in">Sign in</string>
+    <string name="password">Password</string>
 </resources>
