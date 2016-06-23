@@ -20,6 +20,7 @@ import com.akexorcist.myapplication.manager.EventTrackerManager;
 import com.akexorcist.myapplication.manager.VibrationManager;
 import com.akexorcist.myapplication.model.ChatRoom;
 import com.akexorcist.myapplication.model.MessageItem;
+import com.akexorcist.myapplication.utility.Utility;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -71,24 +72,6 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         tvUserName.setText(String.format("%s %s", getString(R.string.sign_in_as), getCurrentUserEmail()));
     }
 
-    private void showLoading() {
-        pbLoading.setVisibility(View.VISIBLE);
-        etMessage.setEnabled(false);
-        btnSendMessage.setEnabled(false);
-    }
-
-    private void hideLoading() {
-        pbLoading.setVisibility(View.GONE);
-        etMessage.setEnabled(true);
-        btnSendMessage.setEnabled(true);
-    }
-
-    private void setupChatList(ChatRoom chatRoom) {
-        messageAdapter = new MessageAdapter(chatRoom, getCurrentUserEmail());
-        rvMessage.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-        rvMessage.setAdapter(messageAdapter);
-    }
-
     private void setupRealtimeDatabase() {
         DatabaseReference rootDatabaseReference = FirebaseDatabase.getInstance().getReference();
         messageDatabaseReference = rootDatabaseReference.child(FirebaseKey.CHAT_DATABASE_REFERENCE_KEY);
@@ -107,31 +90,49 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
 //                } else {
 //                    Log.e("Check", "Unsuccessful " + task.getResult().toString());
 //                }
-                updateFeature();
+
+                updateChangeNameFeature();
             }
         });
-    }
-
-    private void checkUserAuthentication() {
-        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (firebaseUser == null) {
-            showPopupMessage(R.string.please_sign_in);
-            finish();
-        }
-    }
-
-    private String getCurrentUserEmail() {
-        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (firebaseUser != null) {
-            return firebaseUser.getEmail();
-        }
-        return "";
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         messageDatabaseReference.removeEventListener(messageValueEventListener);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_chat_room, menu);
+        MenuItem changeNameMenuItem = menu.findItem(R.id.menu_change_name);
+        boolean isChangeNameEnabled = FirebaseRemoteConfig.getInstance().getBoolean(FirebaseKey.CHANGE_NAME_ENABLE);
+        Log.e("Check", "isChangeNameEnabled " + isChangeNameEnabled);
+        if (isChangeNameEnabled) {
+            changeNameMenuItem.setVisible(true);
+        } else {
+            changeNameMenuItem.setVisible(false);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.menu_sign_out) {
+            signOut();
+        } else if (id == menu_change_name) {
+            changeName();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onClick(View view) {
+        if (view == btnSendMessage) {
+            String message = etMessage.getText().toString();
+            sendMessage(message);
+        }
     }
 
     private ValueEventListener messageValueEventListener = new ValueEventListener() {
@@ -164,29 +165,25 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         scrollChatListToLastChat();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_chat_room, menu);
-        MenuItem changeNameMenuItem = menu.findItem(R.id.menu_change_name);
-        boolean isChangeNameEnabled = FirebaseRemoteConfig.getInstance().getBoolean(FirebaseKey.CHANGE_NAME_ENABLE);
-        Log.e("Check", "isChangeNameEnabled " + isChangeNameEnabled);
-        if (isChangeNameEnabled) {
-            changeNameMenuItem.setVisible(true);
-        } else {
-            changeNameMenuItem.setVisible(false);
-        }
-        return true;
+    private void changeName() {
+        // TODO Add change name feature
+        EventTrackerManager.onChangeName(this);
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.menu_sign_out) {
-            signOut();
-        } else if (id == menu_change_name) {
-            changeName();
+    private void sendMessage(String message) {
+        if (Utility.isMessageValidated(message)) {
+            clearMessageBox();
+            hideKeyboard();
+            sendMessageToRealtimeDatabase(message);
         }
-        return super.onOptionsItemSelected(item);
+    }
+
+    private void sendMessageToRealtimeDatabase(String message) {
+        if (chatRoom != null) {
+            MessageItem messageItem = new MessageItem(message, getCurrentUserEmail());
+            chatRoom.addMessageItem(messageItem);
+            messageDatabaseReference.setValue(chatRoom);
+        }
     }
 
     private void signOut() {
@@ -198,45 +195,8 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         openActivity(LoginActivity.class);
     }
 
-    private void changeName() {
-        // TODO Add change name feature
-        EventTrackerManager.onChangeName(this);
-    }
-
-    @Override
-    public void onClick(View view) {
-        if (view == btnSendMessage) {
-            String message = etMessage.getText().toString();
-            sendMessage(message);
-        }
-    }
-
-    private void sendMessage(String message) {
-        if (isMessageValidated(message)) {
-            clearMessageBox();
-            hideKeyboard();
-            sendMessageToRealtimeDatabase(message);
-        }
-    }
-
-    private void updateFeature() {
-        updateChangeNameFeature();
-    }
-
     private void updateChangeNameFeature() {
         invalidateOptionsMenu();
-    }
-
-    private void sendMessageToRealtimeDatabase(String message) {
-        if (chatRoom != null) {
-            MessageItem messageItem = new MessageItem(message, getCurrentUserEmail());
-            chatRoom.addMessageItem(messageItem);
-            messageDatabaseReference.setValue(chatRoom);
-        }
-    }
-
-    private boolean isMessageValidated(String message) {
-        return !(message == null || message.isEmpty());
     }
 
     private void clearMessageBox() {
@@ -247,5 +207,39 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
 
     private void scrollChatListToLastChat() {
         rvMessage.smoothScrollToPosition(rvMessage.getAdapter().getItemCount());
+    }
+
+    private void checkUserAuthentication() {
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser == null) {
+            showPopupMessage(R.string.please_sign_in);
+            finish();
+        }
+    }
+
+    private String getCurrentUserEmail() {
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser != null) {
+            return firebaseUser.getEmail();
+        }
+        return "";
+    }
+
+    private void showLoading() {
+        pbLoading.setVisibility(View.VISIBLE);
+        etMessage.setEnabled(false);
+        btnSendMessage.setEnabled(false);
+    }
+
+    private void hideLoading() {
+        pbLoading.setVisibility(View.GONE);
+        etMessage.setEnabled(true);
+        btnSendMessage.setEnabled(true);
+    }
+
+    private void setupChatList(ChatRoom chatRoom) {
+        messageAdapter = new MessageAdapter(chatRoom, getCurrentUserEmail());
+        rvMessage.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        rvMessage.setAdapter(messageAdapter);
     }
 }

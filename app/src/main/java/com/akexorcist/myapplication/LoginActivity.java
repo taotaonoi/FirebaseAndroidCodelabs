@@ -8,6 +8,7 @@ import android.widget.EditText;
 
 import com.akexorcist.myapplication.common.BaseActivity;
 import com.akexorcist.myapplication.manager.DialogManager;
+import com.akexorcist.myapplication.utility.Utility;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.AuthResult;
@@ -124,11 +125,11 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
     }
 
     private boolean isUsernameAndPasswordValidated(String username, String password) {
-        if (username.isEmpty() || password.isEmpty()) {
+        if (Utility.isUsernameAndPasswordEmpty(username, password)) {
             showBottomMessage(R.string.please_insert_username_password);
             return false;
         }
-        if (username.length() < 6 || password.length() < 6) {
+        if (Utility.isUsernameAndPasswordLessThan6Charactor(username, password)) {
             showBottomMessage(R.string.username_password_contain_at_least_6_characters);
             return false;
         }
