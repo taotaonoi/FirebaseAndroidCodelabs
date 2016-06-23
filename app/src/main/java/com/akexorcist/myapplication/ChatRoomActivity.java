@@ -10,6 +10,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.akexorcist.myapplication.adpter.MessageAdapter;
@@ -39,6 +40,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     private EditText etMessage;
     private ImageButton btnSendMessage;
     private RecyclerView rvMessage;
+    private ProgressBar pbLoading;
     private MessageAdapter messageAdapter;
     private ChatRoom chatRoom;
     private DatabaseReference messageDatabaseReference;
@@ -60,20 +62,23 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         etMessage = (EditText) findViewById(R.id.et_message);
         btnSendMessage = (ImageButton) findViewById(R.id.btn_send_message);
         rvMessage = (RecyclerView) findViewById(R.id.rv_message);
+        pbLoading = (ProgressBar) findViewById(R.id.pb_loading);
     }
 
     private void setupView() {
-        disableChat();
+        showLoading();
         btnSendMessage.setOnClickListener(this);
         tvUserName.setText(String.format("%s %s", getString(R.string.sign_in_as), getCurrentUserEmail()));
     }
 
-    private void disableChat() {
+    private void showLoading() {
+        pbLoading.setVisibility(View.VISIBLE);
         etMessage.setEnabled(false);
         btnSendMessage.setEnabled(false);
     }
 
-    private void enableChat() {
+    private void hideLoading() {
+        pbLoading.setVisibility(View.GONE);
         etMessage.setEnabled(true);
         btnSendMessage.setEnabled(true);
     }
@@ -149,7 +154,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         }
         if (this.chatRoom == null) {
             setupChatList(chatRoom);
-            enableChat();
+            hideLoading();
             this.chatRoom = chatRoom;
         } else {
             this.chatRoom.setMessageItemList(chatRoom.getMessageItemList());

@@ -7,4 +7,5 @@
     <dimen name="message_item_background_corner_radius">5dp</dimen>
     <dimen name="message_item_border_width">1dp</dimen>
     <dimen name="button_radius">2dp</dimen>
+    <dimen name="chat_box_height">60dp</dimen>
 </resources>

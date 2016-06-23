@@ -14,7 +14,7 @@
     <View
         android:id="@+id/view_chat_box"
         android:layout_width="0dp"
-        android:layout_height="60dp"
+        android:layout_height="@dimen/chat_box_height"
         android:background="@color/colorWhite"
         app:layout_constraintBottom_toBottomOf="@+id/activity_chat_room"
         app:layout_constraintHorizontal_bias="1.0"
@@ -41,8 +41,8 @@
 
     <ImageButton
         android:id="@+id/btn_send_message"
-        android:layout_width="@dimen/button_send_message_size"
-        android:layout_height="@dimen/button_send_message_size"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_marginEnd="16dp"
         android:layout_marginRight="16dp"
         android:background="@drawable/selector_oval_button_accent"
@@ -74,7 +74,8 @@
         app:layout_constraintBottom_toTopOf="@+id/view_chat_box"
         app:layout_constraintLeft_toLeftOf="@+id/activity_chat_room"
         app:layout_constraintRight_toRightOf="@+id/activity_chat_room"
-        app:layout_constraintTop_toBottomOf="@+id/tv_user_name" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_user_name"
+        tools:listitem="@layout/view_other_message_item" />
 
     <View
         android:id="@+id/view_divider_name"
@@ -93,4 +94,16 @@
         app:layout_constraintLeft_toLeftOf="@+id/rv_message"
         app:layout_constraintRight_toRightOf="@+id/rv_message"
         app:layout_constraintTop_toTopOf="@+id/view_chat_box" />
+
+    <ProgressBar
+        android:id="@+id/pb_loading"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/view_chat_box"
+        app:layout_constraintLeft_toLeftOf="@+id/activity_chat_room"
+        app:layout_constraintRight_toRightOf="@+id/activity_chat_room"
+        app:layout_constraintTop_toBottomOf="@+id/tv_user_name"
+        app:layout_constraintTop_toTopOf="@+id/activity_chat_room"
+        tools:layout_editor_absoluteX="84dp" />
 </android.support.constraint.ConstraintLayout>
