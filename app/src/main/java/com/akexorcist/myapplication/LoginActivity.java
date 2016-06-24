@@ -9,11 +9,6 @@ import android.widget.EditText;
 import com.akexorcist.myapplication.common.BaseActivity;
 import com.akexorcist.myapplication.manager.DialogManager;
 import com.akexorcist.myapplication.utility.Utility;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends BaseActivity implements View.OnClickListener {
     private EditText etUsername;
@@ -21,7 +16,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
     private Button btnSignIn;
     private Button btnSignUp;
 
-    private FirebaseAuth firebaseAuth;
+    // TODO Firebase Auth (1) : Declare FirebaseAuth instance
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,12 +42,12 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
     }
 
     private void setupFirebaseAuth() {
-        firebaseAuth = FirebaseAuth.getInstance();
+        // TODO Firebase Auth (2) : Setup FirebaseAuth instance
     }
 
     private void checkAlreadyLoggedIn() {
-        FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
-        if (firebaseUser != null) {
+        // TODO Firebase Auth (3) : Check current user and open chat room if current user is available
+        if (true) {
             goToChatRoom();
         }
     }
@@ -74,48 +69,16 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
     private void signUp(@NonNull String username, @NonNull String password) {
         if (isUsernameAndPasswordValidated(username, password)) {
             showLoadingDialog();
-            firebaseAuth.createUserWithEmailAndPassword(username, password)
-                    .addOnSuccessListener(new OnSuccessListener<AuthResult>() {
-                        @Override
-                        public void onSuccess(AuthResult authResult) {
-                            FirebaseUser user = authResult.getUser();
-                            if (user != null) {
-                                dismissLoadingDialog();
-                                goToChatRoom();
-                            }
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            dismissLoadingDialog();
-                            showBottomMessage(e.getMessage());
-                        }
-                    });
+
+            // TODO Firebase Auth (4) : Create user with email and password. If success, check user available then dismiss dialog and go to chat room. If failure, dismiss dialog and show error with bottom message (snackbar)
         }
     }
 
     private void signIn(@NonNull String username, @NonNull String password) {
         if (isUsernameAndPasswordValidated(username, password)) {
             showLoadingDialog();
-            firebaseAuth.signInWithEmailAndPassword(username, password)
-                    .addOnSuccessListener(new OnSuccessListener<AuthResult>() {
-                        @Override
-                        public void onSuccess(AuthResult authResult) {
-                            FirebaseUser user = authResult.getUser();
-                            if (user != null) {
-                                dismissLoadingDialog();
-                                goToChatRoom();
-                            }
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            dismissLoadingDialog();
-                            showBottomMessage(e.getMessage());
-                        }
-                    });
+
+            // TODO Firebase Auth (5) : Sign in with email and password. If success, check user available then dismiss dialog and go to chat room. If failure, dismiss dialog and show error with bottom message (snackbar)
         }
     }
 
@@ -131,7 +94,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         openActivity(ChatRoomActivity.class);
     }
 
-    public boolean isUsernameAndPasswordValidated(String username, String password) {
+    private boolean isUsernameAndPasswordValidated(String username, String password) {
         if (Utility.isUsernameAndPasswordEmpty(username, password)) {
             showBottomMessage(R.string.please_insert_username_password);
             return false;
