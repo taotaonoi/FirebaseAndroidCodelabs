@@ -13,22 +13,10 @@ import android.widget.TextView;
 
 import com.akexorcist.myapplication.adpter.MessageAdapter;
 import com.akexorcist.myapplication.common.BaseActivity;
-import com.akexorcist.myapplication.constant.FirebaseKey;
 import com.akexorcist.myapplication.manager.EventTrackerManager;
 import com.akexorcist.myapplication.model.Message;
 import com.akexorcist.myapplication.model.MessageData;
 import com.akexorcist.myapplication.utility.Utility;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
-import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,11 +29,10 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     private ProgressBar pbLoading;
     private MessageAdapter messageAdapter;
     private List<MessageData> messageDataList;
-    private DatabaseReference messageDatabaseReference;
 
-    private FirebaseRemoteConfig firebaseRemoteConfig;
-    private FirebaseAuth firebaseAuth;
-    private FirebaseDatabase firebaseDatabase;
+    // TODO Firebase Remote Config (1) : Declare FirebaseRemoteConfig instance
+    // TODO Firebase Auth (1) : Declare FirebaseAuth instance
+    // TODO Firebase Database (1) : Declare FirebaseDatabase instance and DatabaseReference for message data
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,36 +68,46 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     }
 
     private void setupFirebaseInstance() {
-        firebaseAuth = FirebaseAuth.getInstance();
-        firebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
-        firebaseDatabase = FirebaseDatabase.getInstance();
+        // TODO Firebase Remote Config (2) : Setup FirebaseRemoteConfig instance
+        // TODO Firebase Auth (2) : Setup FirebaseAuth instance
+        // TODO Firebase Database (2) : Setup FirebaseDatabase instance
     }
 
     private void setupRemoteConfig() {
-        FirebaseRemoteConfigSettings firebaseRemoteConfigSettings = new FirebaseRemoteConfigSettings.Builder()
-                .setDeveloperModeEnabled(true)
-                .build();
-        firebaseRemoteConfig.setConfigSettings(firebaseRemoteConfigSettings);
-        firebaseRemoteConfig.setDefaults(R.xml.remote_config_default);
-        firebaseRemoteConfig.fetch().addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                firebaseRemoteConfig.activateFetched();
-                updateSpecialUserFeature();
-            }
-        });
+        // TODO Firebase Remote Config (3) : Create FirebaseRemoteConfigSettings from builder and enable developer mode
+        // TODO Firebase Remote Config (4) : Setup config settings and defaults with xml resource
+        // TODO Firebase Remote Config (5) : Fetch config from Firebase Server. If success, Activated fetched config and update special user feature
     }
 
     private void setupRealtimeDatabase() {
-        messageDatabaseReference = firebaseDatabase.getReference().child(FirebaseKey.CHAT_DATABASE_REFERENCE_KEY);
-        messageDatabaseReference.addValueEventListener(messageValueEventListener);
-        messageDatabaseReference.addChildEventListener(messageChildEventListener);
+        // TODO Firebase Database (3) : Get reference from child with database reference key
+        // TODO Firebase Database (4) : Add value event listener
+        // TODO Firebase Database (5) : Add child event listener
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        messageDatabaseReference.removeEventListener(messageChildEventListener);
+        // TODO Firebase Database (6) : Remove child event listener
+    }
+
+    // TODO Firebase Database (7) : Create ValueEventListener and remove value event listener when onDataChange was called then hide loading dialog. If cancelled show popup message with something error in realtime database message
+    // TODO Firebase Database (8) : Create ChildEventListener and call addMessageData when onChildAdded. If onChildRemoved was called, remove message by data snapshot key. If cancelled show popup message with something error in realtime database message
+
+    private void addMessageData(String key, Message message) {
+        MessageData messageData = new MessageData(key, message);
+        messageDataList.add(messageData);
+        updateMessageView();
+    }
+
+    private void removeMessageByKey(String key) {
+        for (MessageData messageData : messageDataList) {
+            if (key.equals(messageData.getKey())) {
+                messageDataList.remove(messageData);
+                updateMessageView();
+                return;
+            }
+        }
     }
 
     @Override
@@ -142,57 +139,8 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     }
 
     private void removeMessageItemByPosition(int position) {
-        messageDatabaseReference.child(messageDataList.get(position).getKey()).removeValue();
+        // TODO Firebase Database (9) : Get database reference from child by key then remove it with removeValue()
     }
-
-    private ValueEventListener messageValueEventListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(DataSnapshot dataSnapshot) {
-            messageDatabaseReference.removeEventListener(messageValueEventListener);
-            hideLoading();
-        }
-
-        @Override
-        public void onCancelled(DatabaseError databaseError) {
-            showPopupMessage(R.string.something_error_in_realtime_database);
-        }
-    };
-
-    private ChildEventListener messageChildEventListener = new ChildEventListener() {
-        @Override
-        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-            String key = dataSnapshot.getKey();
-            Message message = dataSnapshot.getValue(Message.class);
-            MessageData messageData = new MessageData(key, message);
-            messageDataList.add(messageData);
-            updateMessageView();
-        }
-
-        @Override
-        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-        }
-
-        @Override
-        public void onChildRemoved(DataSnapshot dataSnapshot) {
-            String key = dataSnapshot.getKey();
-            for (MessageData messageData : messageDataList) {
-                if (key.equals(messageData.getKey())) {
-                    messageDataList.remove(messageData);
-                    updateMessageView();
-                    return;
-                }
-            }
-        }
-
-        @Override
-        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-        }
-
-        @Override
-        public void onCancelled(DatabaseError databaseError) {
-            showPopupMessage(R.string.something_error_in_realtime_database);
-        }
-    };
 
     private void updateMessageView() {
         messageAdapter.notifyDataSetChanged();
@@ -209,12 +157,12 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
 
     private void addNewMessage(String message) {
         Message messageData = new Message(message, getCurrentUserEmail());
-        messageDatabaseReference.push().setValue(messageData);
+        // TODO Firebase Database (10) : Add message with push() and set message data value
     }
 
     private void signOut() {
         EventTrackerManager.onLogout(this, getCurrentUserEmail());
-        firebaseAuth.signOut();
+        // TODO Firebase Auth (3) : Sign out
         goToLogin();
     }
 
@@ -223,19 +171,20 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     }
 
     private void checkUserAuthentication() {
-        FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
-        if (firebaseUser == null) {
+        // TODO Firebase Auth (4) : Get current user. If current user unavailable.
+        if (true) {
             showPopupMessage(R.string.please_sign_in);
             finish();
         }
     }
 
     private String getCurrentUserEmail() {
-        FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
-        if (firebaseUser != null) {
-            return firebaseUser.getEmail();
-        }
+        // TODO Firebase Auth (5) : Get current user email (with avoid NPE code). If current user instance unavailable, return empty string
         return "";
+    }
+
+    private void updateSpecialUserFeature() {
+        // TODO Firebase Remote Config (6) : Get boolean config from special user enable key, then call setSpecialUser(special_user_enable)
     }
 
     private void showLoading() {
@@ -248,11 +197,6 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         pbLoading.setVisibility(View.GONE);
         etMessage.setEnabled(true);
         btnSendMessage.setEnabled(true);
-    }
-
-    private void updateSpecialUserFeature() {
-        boolean isSpecialUser = firebaseRemoteConfig.getBoolean(FirebaseKey.SPECIAL_USER_ENABLE);
-        setSpecialUser(isSpecialUser);
     }
 
     private void setSpecialUser(boolean isSpecialUser) {
