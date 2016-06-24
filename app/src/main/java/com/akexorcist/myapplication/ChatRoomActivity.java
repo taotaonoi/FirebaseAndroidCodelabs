@@ -45,6 +45,9 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     private ChatRoom chatRoom;
     private DatabaseReference messageDatabaseReference;
 
+    private FirebaseRemoteConfig firebaseRemoteConfig;
+    private FirebaseAuth firebaseAuth;
+    private FirebaseDatabase firebaseDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +56,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         checkUserAuthentication();
         bindView();
         setupView();
+        setupFirebaseInstance();
         setupRealtimeDatabase();
         setupRemoteConfig();
     }
@@ -71,9 +75,14 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         tvUserName.setText(String.format("%s %s", getString(R.string.sign_in_as), getCurrentUserEmail()));
     }
 
+    private void setupFirebaseInstance() {
+        firebaseAuth = FirebaseAuth.getInstance();
+        firebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
+        firebaseDatabase = FirebaseDatabase.getInstance();
+    }
+
     private void setupRealtimeDatabase() {
-        DatabaseReference rootDatabaseReference = FirebaseDatabase.getInstance().getReference();
-        messageDatabaseReference = rootDatabaseReference.child(FirebaseKey.CHAT_DATABASE_REFERENCE_KEY);
+        messageDatabaseReference = firebaseDatabase.getReference().child(FirebaseKey.CHAT_DATABASE_REFERENCE_KEY);
         messageDatabaseReference.addValueEventListener(messageValueEventListener);
     }
 
@@ -81,14 +90,12 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         FirebaseRemoteConfigSettings firebaseRemoteConfigSettings = new FirebaseRemoteConfigSettings.Builder()
                 .setDeveloperModeEnabled(false)
                 .build();
-
-        FirebaseRemoteConfig firebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
         firebaseRemoteConfig.setConfigSettings(firebaseRemoteConfigSettings);
         firebaseRemoteConfig.setDefaults(R.xml.remote_config_default);
         firebaseRemoteConfig.fetch(0).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                FirebaseRemoteConfig.getInstance().activateFetched();
+                firebaseRemoteConfig.activateFetched();
                 updateSpecialUserFeature();
             }
         });
@@ -191,7 +198,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     private void signOut() {
         EventTrackerManager.onLogout(this, getCurrentUserEmail());
         goToLogin();
-        FirebaseAuth.getInstance().signOut();
+        firebaseAuth.signOut();
     }
 
     private void goToLogin() {
@@ -209,7 +216,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     }
 
     private void checkUserAuthentication() {
-        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
         if (firebaseUser == null) {
             showPopupMessage(R.string.please_sign_in);
             finish();
@@ -217,7 +224,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     }
 
     private String getCurrentUserEmail() {
-        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
         if (firebaseUser != null) {
             return firebaseUser.getEmail();
         }
@@ -248,7 +255,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     }
 
     private void updateSpecialUserFeature() {
-        setSpecialUser(FirebaseRemoteConfig.getInstance().getBoolean(FirebaseKey.SPECIAL_USER_ENABLE));
+        setSpecialUser(firebaseRemoteConfig.getBoolean(FirebaseKey.SPECIAL_USER_ENABLE));
     }
 
     private void setSpecialUser(boolean isSpecialUser) {
