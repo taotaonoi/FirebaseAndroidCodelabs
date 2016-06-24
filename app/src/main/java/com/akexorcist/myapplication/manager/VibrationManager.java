@@ -9,7 +9,14 @@ import android.os.Vibrator;
 
 public class VibrationManager {
     public static void vibrate(Context context) {
-        Vibrator v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-        v.vibrate(300);
+        if (VibrationManager.hasVibrator(context)) {
+            Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+            vibrator.vibrate(300);
+        }
+    }
+
+    public static boolean hasVibrator(Context context) {
+        Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        return vibrator.hasVibrator();
     }
 }
