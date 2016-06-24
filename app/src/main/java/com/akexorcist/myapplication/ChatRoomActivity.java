@@ -268,7 +268,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
 
     private void playMessageIncomingEffect() {
         String filePath = "effect/incoming_message.mp3";
-        SoundManager.getInstance().play(SoundManager.getAssetFileDescriptor(this, filePath), null);
+        SoundManager.play(SoundManager.getAssetFileDescriptor(this, filePath));
         VibrationManager.vibrate(this);
     }
 }

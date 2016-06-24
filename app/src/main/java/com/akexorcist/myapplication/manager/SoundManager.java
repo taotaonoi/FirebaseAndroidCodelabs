@@ -10,23 +10,7 @@ import java.io.IOException;
  * Created by Akexorcist on 6/7/16 AD.
  */
 public class SoundManager {
-    private static SoundManager soundManager;
-
-    public static SoundManager getInstance() {
-        if (soundManager == null) {
-            soundManager = new SoundManager();
-        }
-        return soundManager;
-    }
-
-    public SoundManager() {
-    }
-
-    public boolean play(AssetFileDescriptor assetFileDescriptor) {
-        return play(assetFileDescriptor, null);
-    }
-
-    public boolean play(AssetFileDescriptor assetFileDescriptor, final OnPlaybackListener onPlaybackListener) {
+    public static boolean play(AssetFileDescriptor assetFileDescriptor) {
         if (assetFileDescriptor != null) {
             try {
                 final MediaPlayer mediaPlayer = new MediaPlayer();
@@ -34,9 +18,6 @@ public class SoundManager {
                     @Override
                     public void onCompletion(MediaPlayer mp) {
                         mp.release();
-                        if (onPlaybackListener != null) {
-                            onPlaybackListener.onCompleted();
-                        }
                     }
                 });
                 mediaPlayer.setDataSource(assetFileDescriptor.getFileDescriptor(), assetFileDescriptor.getStartOffset(), assetFileDescriptor.getLength());
@@ -57,9 +38,5 @@ public class SoundManager {
             e.printStackTrace();
         }
         return null;
-    }
-
-    public interface OnPlaybackListener {
-        void onCompleted();
     }
 }
