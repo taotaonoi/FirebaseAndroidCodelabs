@@ -1,7 +1,6 @@
 package com.akexorcist.myapplication;
 
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -22,18 +21,15 @@ import com.akexorcist.myapplication.manager.VibrationManager;
 import com.akexorcist.myapplication.model.ChatRoom;
 import com.akexorcist.myapplication.model.MessageItem;
 import com.akexorcist.myapplication.utility.Utility;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.crash.FirebaseCrash;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
-import com.google.firebase.remoteconfig.FirebaseRemoteConfigFetchThrottledException;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 
 import java.util.ArrayList;
@@ -59,7 +55,6 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         setupView();
         setupRealtimeDatabase();
         setupRemoteConfig();
-        FirebaseCrash.report(new Exception("My first Android non-fatal error"));
     }
 
     private void bindView() {
@@ -93,16 +88,8 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         firebaseRemoteConfig.fetch(0).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                Log.e("Check", "Success");
                 FirebaseRemoteConfig.getInstance().activateFetched();
                 updateSpecialUserFeature();
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                FirebaseRemoteConfigFetchThrottledException exception = (FirebaseRemoteConfigFetchThrottledException) e;
-                Log.e("Check", "getCurrentMillis " + System.currentTimeMillis());
-                Log.e("Check", "getThrottleEndTimeMillis " + exception.getThrottleEndTimeMillis());
             }
         });
     }
