@@ -1,7 +1,2 @@
 <?xml version="1.0" encoding="utf-8"?>
-<defaultsMap>
-    <entry>
-        <key>special_user_enable</key>
-        <value>false</value>
-    </entry>
-</defaultsMap>
+<!-- TODO Firebase Remote Config (1) : Declare defaultsMap > entry > key (special_user_enable) + value (boolean) -->
