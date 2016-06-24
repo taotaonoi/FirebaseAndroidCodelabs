@@ -3,7 +3,6 @@ package com.akexorcist.myapplication;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -160,15 +159,19 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         } else {
             this.chatRoom.setMessageItemList(chatRoom.getMessageItemList());
         }
-        refreshMessageItem();
+        updateMessageIncomingView();
         playMessageIncomingEffect();
-        scrollChatListToLastChat();
         hideLoading();
+    }
+
+    private void updateMessageIncomingView() {
+        messageAdapter.notifyDataSetChanged();
+        rvMessage.smoothScrollToPosition(rvMessage.getAdapter().getItemCount());
     }
 
     private void sendMessage(String message) {
         if (Utility.isMessageValidated(message)) {
-            clearMessageBox();
+            etMessage.setText("");
             hideKeyboard();
             addNewMessageToMessageList(message);
         }
@@ -197,22 +200,12 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
 
     private void signOut() {
         EventTrackerManager.onLogout(this, getCurrentUserEmail());
-        goToLogin();
         firebaseAuth.signOut();
+        goToLogin();
     }
 
     private void goToLogin() {
         openActivity(LoginActivity.class);
-    }
-
-    private void clearMessageBox() {
-        if (etMessage != null) {
-            etMessage.setText("");
-        }
-    }
-
-    private void scrollChatListToLastChat() {
-        rvMessage.smoothScrollToPosition(rvMessage.getAdapter().getItemCount());
     }
 
     private void checkUserAuthentication() {
@@ -250,17 +243,13 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         rvMessage.setAdapter(messageAdapter);
     }
 
-    private void refreshMessageItem() {
-        messageAdapter.notifyDataSetChanged();
-    }
-
     private void updateSpecialUserFeature() {
-        setSpecialUser(firebaseRemoteConfig.getBoolean(FirebaseKey.SPECIAL_USER_ENABLE));
+        boolean isSpecialUser = firebaseRemoteConfig.getBoolean(FirebaseKey.SPECIAL_USER_ENABLE);
+        setSpecialUser(isSpecialUser);
     }
 
     private void setSpecialUser(boolean isSpecialUser) {
         if (messageAdapter != null) {
-            Log.e("Check", "is Special : " + isSpecialUser);
             messageAdapter.setSpecialUser(isSpecialUser);
             messageAdapter.notifyDataSetChanged();
         }
