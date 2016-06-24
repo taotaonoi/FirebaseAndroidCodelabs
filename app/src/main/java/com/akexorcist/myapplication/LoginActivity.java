@@ -21,6 +21,8 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
     private Button btnSignIn;
     private Button btnSignUp;
 
+    private FirebaseAuth firebaseAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,6 +30,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
 
         bindView();
         setupView();
+        setupFirebaseAuth();
         checkAlreadyLoggedIn();
     }
 
@@ -43,8 +46,12 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         btnSignUp.setOnClickListener(this);
     }
 
+    private void setupFirebaseAuth() {
+        firebaseAuth = FirebaseAuth.getInstance();
+    }
+
     private void checkAlreadyLoggedIn() {
-        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
         if (firebaseUser != null) {
             goToChatRoom();
         }
@@ -67,7 +74,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
     private void signUp(@NonNull String username, @NonNull String password) {
         if (isUsernameAndPasswordValidated(username, password)) {
             showLoadingDialog();
-            FirebaseAuth.getInstance().createUserWithEmailAndPassword(username, password)
+            firebaseAuth.createUserWithEmailAndPassword(username, password)
                     .addOnSuccessListener(new OnSuccessListener<AuthResult>() {
                         @Override
                         public void onSuccess(AuthResult authResult) {
@@ -91,7 +98,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
     private void signIn(@NonNull String username, @NonNull String password) {
         if (isUsernameAndPasswordValidated(username, password)) {
             showLoadingDialog();
-            FirebaseAuth.getInstance().signInWithEmailAndPassword(username, password)
+            firebaseAuth.signInWithEmailAndPassword(username, password)
                     .addOnSuccessListener(new OnSuccessListener<AuthResult>() {
                         @Override
                         public void onSuccess(AuthResult authResult) {
