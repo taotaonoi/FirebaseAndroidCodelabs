@@ -265,9 +265,11 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     }
 
     private void setSpecialUser(boolean isSpecialUser) {
-        Log.e("Check", "is Special : " + isSpecialUser);
-        messageAdapter.setSpecialUser(isSpecialUser);
-        messageAdapter.notifyDataSetChanged();
+        if (messageAdapter != null) {
+            Log.e("Check", "is Special : " + isSpecialUser);
+            messageAdapter.setSpecialUser(isSpecialUser);
+            messageAdapter.notifyDataSetChanged();
+        }
     }
 
     private void playMessageIncomingEffect() {
