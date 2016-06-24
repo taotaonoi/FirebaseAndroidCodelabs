@@ -40,6 +40,10 @@ public class DialogManager {
                 .show();
     }
 
+    public boolean isDialogShowing() {
+        return materialDialog != null && materialDialog.isShowing();
+    }
+
     public void dismissDialog() {
         if (materialDialog != null) {
             materialDialog.dismiss();
