@@ -172,11 +172,6 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         hideLoading();
     }
 
-    private void changeName() {
-        // TODO Add change name feature
-        EventTrackerManager.onChangeName(this);
-    }
-
     private void sendMessage(String message) {
         if (Utility.isMessageValidated(message)) {
             clearMessageBox();
@@ -207,6 +202,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     }
 
     private void signOut() {
+        EventTrackerManager.onLogout(this, getCurrentUserEmail());
         goToLogin();
         FirebaseAuth.getInstance().signOut();
     }

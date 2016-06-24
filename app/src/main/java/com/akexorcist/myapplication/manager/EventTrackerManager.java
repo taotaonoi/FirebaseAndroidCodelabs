@@ -10,9 +10,10 @@ import com.google.firebase.analytics.FirebaseAnalytics;
  */
 
 public class EventTrackerManager {
-    public static void onChangeName(Context context) {
+    public static void onLogout(Context context, String userEmail) {
         Bundle bundle = new Bundle();
-        bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "change_name");
+        bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "logout");
+        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, userEmail);
         FirebaseAnalytics.getInstance(context).logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
     }
 }
