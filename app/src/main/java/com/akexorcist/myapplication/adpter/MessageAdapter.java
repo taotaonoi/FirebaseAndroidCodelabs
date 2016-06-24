@@ -20,6 +20,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private static final int TYPE_USER = 1;
     private ChatRoom chatRoom;
     private String currentUser;
+    private boolean isSpecialUser = false;
     private OnMessageItemLongClickListener messageItemLongClickListener;
 
     public MessageAdapter(ChatRoom chatRoom, String currentUser) {
@@ -48,10 +49,14 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
+    public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
         MessageItem messageItem = chatRoom.getMessageItemList().get(position);
         if (holder instanceof UserMessageViewHolder) {
             UserMessageViewHolder userMessageViewHolder = (UserMessageViewHolder) holder;
+            if (isSpecialUser) {
+                int specialColor = userMessageViewHolder.itemView.getResources().getColor(R.color.colorAmber);
+                userMessageViewHolder.tvUserName.setTextColor(specialColor);
+            }
             userMessageViewHolder.tvUserName.setText(R.string.you);
             userMessageViewHolder.tvMessage.setText(messageItem.getText());
         } else if (holder instanceof OtherMessageViewHolder) {
@@ -63,7 +68,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             @Override
             public boolean onLongClick(View view) {
                 if (messageItemLongClickListener != null) {
-                    messageItemLongClickListener.onMessageItemLongClick(position);
+                    messageItemLongClickListener.onMessageItemLongClick(holder.getAdapterPosition());
                 }
                 return true;
             }
@@ -72,6 +77,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     public void setOnItemLongClickListener(OnMessageItemLongClickListener listener) {
         messageItemLongClickListener = listener;
+    }
+
+    public void setSpecialUser(boolean isSpecialUser) {
+        this.isSpecialUser = isSpecialUser;
     }
 
     @Override

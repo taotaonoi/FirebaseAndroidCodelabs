@@ -5,6 +5,6 @@ package com.akexorcist.myapplication.constant;
  */
 
 public class FirebaseKey {
-    public static final String CHANGE_NAME_ENABLE = "change_name_enable";
+    public static final String SPECIAL_USER_ENABLE = "special_user_enable";
     public static final String CHAT_DATABASE_REFERENCE_KEY = "global_room";
 }

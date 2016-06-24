@@ -22,8 +22,8 @@ import com.akexorcist.myapplication.manager.VibrationManager;
 import com.akexorcist.myapplication.model.ChatRoom;
 import com.akexorcist.myapplication.model.MessageItem;
 import com.akexorcist.myapplication.utility.Utility;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.crash.FirebaseCrash;
@@ -33,11 +33,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigFetchThrottledException;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.akexorcist.myapplication.R.id.menu_change_name;
 
 public class ChatRoomActivity extends BaseActivity implements View.OnClickListener, MessageAdapter.OnMessageItemLongClickListener {
     private TextView tvUserName;
@@ -83,19 +83,26 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     }
 
     private void setupRemoteConfig() {
-        FirebaseRemoteConfig.getInstance().setDefaults(R.xml.remote_config_default);
-        FirebaseRemoteConfig.getInstance().fetch().addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                Log.e("Check", "onComplete");
-//                if (task.isSuccessful()) {
-//                    Log.e("Check", "isSuccessful");
-                FirebaseRemoteConfig.getInstance().activateFetched();
-//                } else {
-//                    Log.e("Check", "Unsuccessful " + task.getResult().toString());
-//                }
+        FirebaseRemoteConfigSettings firebaseRemoteConfigSettings = new FirebaseRemoteConfigSettings.Builder()
+                .setDeveloperModeEnabled(false)
+                .build();
 
-                updateChangeNameFeature();
+        FirebaseRemoteConfig firebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
+        firebaseRemoteConfig.setConfigSettings(firebaseRemoteConfigSettings);
+        firebaseRemoteConfig.setDefaults(R.xml.remote_config_default);
+        firebaseRemoteConfig.fetch(0).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.e("Check", "Success");
+                FirebaseRemoteConfig.getInstance().activateFetched();
+                updateSpecialUserFeature();
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                FirebaseRemoteConfigFetchThrottledException exception = (FirebaseRemoteConfigFetchThrottledException) e;
+                Log.e("Check", "getCurrentMillis " + System.currentTimeMillis());
+                Log.e("Check", "getThrottleEndTimeMillis " + exception.getThrottleEndTimeMillis());
             }
         });
     }
@@ -109,14 +116,6 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_chat_room, menu);
-        MenuItem changeNameMenuItem = menu.findItem(R.id.menu_change_name);
-        boolean isChangeNameEnabled = FirebaseRemoteConfig.getInstance().getBoolean(FirebaseKey.CHANGE_NAME_ENABLE);
-        Log.e("Check", "isChangeNameEnabled " + isChangeNameEnabled);
-        if (isChangeNameEnabled) {
-            changeNameMenuItem.setVisible(true);
-        } else {
-            changeNameMenuItem.setVisible(false);
-        }
         return true;
     }
 
@@ -125,8 +124,6 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         int id = item.getItemId();
         if (id == R.id.menu_sign_out) {
             signOut();
-        } else if (id == menu_change_name) {
-            changeName();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -164,11 +161,12 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         }
         if (this.chatRoom == null) {
             setupChatList(chatRoom);
+            updateSpecialUserFeature();
             this.chatRoom = chatRoom;
         } else {
             this.chatRoom.setMessageItemList(chatRoom.getMessageItemList());
         }
-        messageAdapter.notifyDataSetChanged();
+        refreshMessageItem();
         playMessageIncomingEffect();
         scrollChatListToLastChat();
         hideLoading();
@@ -217,10 +215,6 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         openActivity(LoginActivity.class);
     }
 
-    private void updateChangeNameFeature() {
-        invalidateOptionsMenu();
-    }
-
     private void clearMessageBox() {
         if (etMessage != null) {
             etMessage.setText("");
@@ -264,6 +258,20 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         messageAdapter.setOnItemLongClickListener(this);
         rvMessage.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         rvMessage.setAdapter(messageAdapter);
+    }
+
+    private void refreshMessageItem() {
+        messageAdapter.notifyDataSetChanged();
+    }
+
+    private void updateSpecialUserFeature() {
+        setSpecialUser(FirebaseRemoteConfig.getInstance().getBoolean(FirebaseKey.SPECIAL_USER_ENABLE));
+    }
+
+    private void setSpecialUser(boolean isSpecialUser) {
+        Log.e("Check", "is Special : " + isSpecialUser);
+        messageAdapter.setSpecialUser(isSpecialUser);
+        messageAdapter.notifyDataSetChanged();
     }
 
     private void playMessageIncomingEffect() {
