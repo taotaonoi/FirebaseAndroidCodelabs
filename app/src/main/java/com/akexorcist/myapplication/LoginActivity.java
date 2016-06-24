@@ -131,7 +131,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         openActivity(ChatRoomActivity.class);
     }
 
-    public boolean isUsernameAndPasswordValidated(String username, String password) {
+    private boolean isUsernameAndPasswordValidated(String username, String password) {
         if (Utility.isUsernameAndPasswordEmpty(username, password)) {
             showBottomMessage(R.string.please_insert_username_password);
             return false;
