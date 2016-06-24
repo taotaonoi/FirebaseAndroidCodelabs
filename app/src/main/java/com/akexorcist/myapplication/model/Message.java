@@ -4,14 +4,14 @@ package com.akexorcist.myapplication.model;
  * Created by Akexorcist on 6/23/2016 AD.
  */
 
-public class MessageItem {
+public class Message {
     String text;
     String user;
 
-    public MessageItem() {
+    public Message() {
     }
 
-    public MessageItem(String text, String user) {
+    public Message(String text, String user) {
         this.text = text;
         this.user = user;
     }

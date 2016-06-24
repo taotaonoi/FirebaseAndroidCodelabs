@@ -8,8 +8,10 @@ import android.view.ViewGroup;
 import com.akexorcist.myapplication.R;
 import com.akexorcist.myapplication.adpter.holder.OtherMessageViewHolder;
 import com.akexorcist.myapplication.adpter.holder.UserMessageViewHolder;
-import com.akexorcist.myapplication.model.ChatRoom;
-import com.akexorcist.myapplication.model.MessageItem;
+import com.akexorcist.myapplication.model.Message;
+import com.akexorcist.myapplication.model.MessageData;
+
+import java.util.List;
 
 /**
  * Created by Akexorcist on 6/20/2016 AD.
@@ -18,13 +20,14 @@ import com.akexorcist.myapplication.model.MessageItem;
 public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int TYPE_OTHER = 0;
     private static final int TYPE_USER = 1;
-    private ChatRoom chatRoom;
+    private List<MessageData> messageDataList;
+    ;
     private String currentUser;
     private boolean isSpecialUser = false;
     private OnMessageItemLongClickListener messageItemLongClickListener;
 
-    public MessageAdapter(ChatRoom chatRoom, String currentUser) {
-        this.chatRoom = chatRoom;
+    public MessageAdapter(List<MessageData> messageDataList, String currentUser) {
+        this.messageDataList = messageDataList;
         this.currentUser = currentUser;
     }
 
@@ -41,7 +44,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public int getItemViewType(int position) {
-        String user = chatRoom.getMessageItemList().get(position).getUser();
+        String user = messageDataList.get(position).getMessage().getUser();
         if (user.equalsIgnoreCase(currentUser)) {
             return TYPE_USER;
         }
@@ -50,7 +53,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
-        MessageItem messageItem = chatRoom.getMessageItemList().get(position);
+        Message message = messageDataList.get(position).getMessage();
         if (holder instanceof UserMessageViewHolder) {
             UserMessageViewHolder userMessageViewHolder = (UserMessageViewHolder) holder;
             if (isSpecialUser) {
@@ -58,11 +61,11 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 userMessageViewHolder.tvUserName.setTextColor(specialColor);
             }
             userMessageViewHolder.tvUserName.setText(R.string.you);
-            userMessageViewHolder.tvMessage.setText(messageItem.getText());
+            userMessageViewHolder.tvMessage.setText(message.getText());
         } else if (holder instanceof OtherMessageViewHolder) {
             OtherMessageViewHolder otherMessageViewHolder = (OtherMessageViewHolder) holder;
-            otherMessageViewHolder.tvUserName.setText(messageItem.getUser());
-            otherMessageViewHolder.tvMessage.setText(messageItem.getText());
+            otherMessageViewHolder.tvUserName.setText(message.getUser());
+            otherMessageViewHolder.tvMessage.setText(message.getText());
         }
         holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -85,7 +88,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public int getItemCount() {
-        return chatRoom.getMessageItemList().size();
+        return messageDataList.size();
     }
 
     public interface OnMessageItemLongClickListener {

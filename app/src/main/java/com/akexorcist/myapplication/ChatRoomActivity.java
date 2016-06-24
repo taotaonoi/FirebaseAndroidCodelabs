@@ -3,6 +3,7 @@ package com.akexorcist.myapplication;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,14 +16,13 @@ import com.akexorcist.myapplication.adpter.MessageAdapter;
 import com.akexorcist.myapplication.common.BaseActivity;
 import com.akexorcist.myapplication.constant.FirebaseKey;
 import com.akexorcist.myapplication.manager.EventTrackerManager;
-import com.akexorcist.myapplication.manager.SoundManager;
-import com.akexorcist.myapplication.manager.VibrationManager;
-import com.akexorcist.myapplication.model.ChatRoom;
-import com.akexorcist.myapplication.model.MessageItem;
+import com.akexorcist.myapplication.model.Message;
+import com.akexorcist.myapplication.model.MessageData;
 import com.akexorcist.myapplication.utility.Utility;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -41,7 +41,7 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     private RecyclerView rvMessage;
     private ProgressBar pbLoading;
     private MessageAdapter messageAdapter;
-    private ChatRoom chatRoom;
+    private List<MessageData> messageDataList;
     private DatabaseReference messageDatabaseReference;
 
     private FirebaseRemoteConfig firebaseRemoteConfig;
@@ -52,12 +52,13 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat_room);
-        checkUserAuthentication();
+
+        setupFirebaseInstance();
         bindView();
         setupView();
-        setupFirebaseInstance();
-        setupRealtimeDatabase();
         setupRemoteConfig();
+        setupRealtimeDatabase();
+        checkUserAuthentication();
     }
 
     private void bindView() {
@@ -72,6 +73,12 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         showLoading();
         btnSendMessage.setOnClickListener(this);
         tvUserName.setText(String.format("%s %s", getString(R.string.sign_in_as), getCurrentUserEmail()));
+
+        messageDataList = new ArrayList<>();
+        messageAdapter = new MessageAdapter(messageDataList, getCurrentUserEmail());
+        messageAdapter.setOnItemLongClickListener(this);
+        rvMessage.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        rvMessage.setAdapter(messageAdapter);
     }
 
     private void setupFirebaseInstance() {
@@ -80,18 +87,13 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         firebaseDatabase = FirebaseDatabase.getInstance();
     }
 
-    private void setupRealtimeDatabase() {
-        messageDatabaseReference = firebaseDatabase.getReference().child(FirebaseKey.CHAT_DATABASE_REFERENCE_KEY);
-        messageDatabaseReference.addValueEventListener(messageValueEventListener);
-    }
-
     private void setupRemoteConfig() {
         FirebaseRemoteConfigSettings firebaseRemoteConfigSettings = new FirebaseRemoteConfigSettings.Builder()
-                .setDeveloperModeEnabled(false)
+                .setDeveloperModeEnabled(true)
                 .build();
         firebaseRemoteConfig.setConfigSettings(firebaseRemoteConfigSettings);
         firebaseRemoteConfig.setDefaults(R.xml.remote_config_default);
-        firebaseRemoteConfig.fetch(0).addOnSuccessListener(new OnSuccessListener<Void>() {
+        firebaseRemoteConfig.fetch().addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 firebaseRemoteConfig.activateFetched();
@@ -100,10 +102,16 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         });
     }
 
+    private void setupRealtimeDatabase() {
+        messageDatabaseReference = firebaseDatabase.getReference().child(FirebaseKey.CHAT_DATABASE_REFERENCE_KEY);
+        messageDatabaseReference.addValueEventListener(messageValueEventListener);
+        messageDatabaseReference.addChildEventListener(messageChildEventListener);
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        messageDatabaseReference.removeEventListener(messageValueEventListener);
+        messageDatabaseReference.removeEventListener(messageChildEventListener);
     }
 
     @Override
@@ -134,11 +142,15 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         removeMessageItemByPosition(position);
     }
 
+    private void removeMessageItemByPosition(int position) {
+        messageDatabaseReference.child(messageDataList.get(position).getKey()).removeValue();
+    }
+
     private ValueEventListener messageValueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
-            ChatRoom chatRoom = dataSnapshot.getValue(ChatRoom.class);
-            updateChatList(chatRoom);
+            messageDatabaseReference.removeEventListener(messageValueEventListener);
+            hideLoading();
         }
 
         @Override
@@ -147,24 +159,43 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         }
     };
 
-    private void updateChatList(ChatRoom chatRoom) {
-        if (chatRoom == null) {
-            chatRoom = new ChatRoom();
-            chatRoom.setMessageItemList(new ArrayList<MessageItem>());
+    private ChildEventListener messageChildEventListener = new ChildEventListener() {
+        @Override
+        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            String key = dataSnapshot.getKey();
+            Message message = dataSnapshot.getValue(Message.class);
+            MessageData messageData = new MessageData(key, message);
+            messageDataList.add(messageData);
+            updateMessageView();
         }
-        if (this.chatRoom == null) {
-            setupChatList(chatRoom);
-            updateSpecialUserFeature();
-            this.chatRoom = chatRoom;
-        } else {
-            this.chatRoom.setMessageItemList(chatRoom.getMessageItemList());
-        }
-        updateMessageIncomingView();
-        playMessageIncomingEffect();
-        hideLoading();
-    }
 
-    private void updateMessageIncomingView() {
+        @Override
+        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+        }
+
+        @Override
+        public void onChildRemoved(DataSnapshot dataSnapshot) {
+            String key = dataSnapshot.getKey();
+            for (MessageData messageData : messageDataList) {
+                if (key.equals(messageData.getKey())) {
+                    messageDataList.remove(messageData);
+                    updateMessageView();
+                    return;
+                }
+            }
+        }
+
+        @Override
+        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+            showPopupMessage(R.string.something_error_in_realtime_database);
+        }
+    };
+
+    private void updateMessageView() {
         messageAdapter.notifyDataSetChanged();
         rvMessage.smoothScrollToPosition(rvMessage.getAdapter().getItemCount());
     }
@@ -173,29 +204,13 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         if (Utility.isMessageValidated(message)) {
             etMessage.setText("");
             hideKeyboard();
-            addNewMessageToMessageList(message);
+            addNewMessage(message);
         }
     }
 
-    private void addNewMessageToMessageList(String message) {
-        if (chatRoom != null) {
-            MessageItem messageItem = new MessageItem(message, getCurrentUserEmail());
-            chatRoom.addMessageItem(messageItem);
-            updateMessageDatabaseReference(chatRoom);
-        }
-    }
-
-    private void updateMessageDatabaseReference(ChatRoom chatRoom) {
-        messageDatabaseReference.setValue(chatRoom);
-    }
-
-    private void removeMessageItemByPosition(int position) {
-        List<MessageItem> messageItemList = chatRoom.getMessageItemList();
-        if (messageItemList != null && messageItemList.size() > position) {
-            messageItemList.remove(position);
-            updateMessageDatabaseReference(chatRoom);
-            showLoading();
-        }
+    private void addNewMessage(String message) {
+        Message messageData = new Message(message, getCurrentUserEmail());
+        messageDatabaseReference.push().setValue(messageData);
     }
 
     private void signOut() {
@@ -236,13 +251,6 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         btnSendMessage.setEnabled(true);
     }
 
-    private void setupChatList(ChatRoom chatRoom) {
-        messageAdapter = new MessageAdapter(chatRoom, getCurrentUserEmail());
-        messageAdapter.setOnItemLongClickListener(this);
-        rvMessage.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-        rvMessage.setAdapter(messageAdapter);
-    }
-
     private void updateSpecialUserFeature() {
         boolean isSpecialUser = firebaseRemoteConfig.getBoolean(FirebaseKey.SPECIAL_USER_ENABLE);
         setSpecialUser(isSpecialUser);
@@ -253,11 +261,5 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
             messageAdapter.setSpecialUser(isSpecialUser);
             messageAdapter.notifyDataSetChanged();
         }
-    }
-
-    private void playMessageIncomingEffect() {
-        String filePath = "effect/incoming_message.mp3";
-        SoundManager.play(SoundManager.getAssetFileDescriptor(this, filePath));
-        VibrationManager.vibrate(this);
     }
 }
