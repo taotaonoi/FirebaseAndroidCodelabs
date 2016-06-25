@@ -30,9 +30,10 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     private MessageAdapter messageAdapter;
     private List<MessageData> messageDataList;
 
-    // TODO Firebase Remote Config (1) : Declare FirebaseRemoteConfig instance
     // TODO Firebase Auth (1) : Declare FirebaseAuth instance
-    // TODO Firebase Database (1) : Declare FirebaseDatabase instance and DatabaseReference for message data
+    // TODO Firebase Database (1) : Declare FirebaseDatabase instance
+    // TODO Firebase Database (2) : Declare DatabaseReference for message data
+    // TODO Firebase Remote Config (1) : Declare FirebaseRemoteConfig instance
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,31 +69,32 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
     }
 
     private void setupFirebaseInstance() {
-        // TODO Firebase Remote Config (2) : Setup FirebaseRemoteConfig instance
         // TODO Firebase Auth (2) : Setup FirebaseAuth instance
-        // TODO Firebase Database (2) : Setup FirebaseDatabase instance
+        // TODO Firebase Database (3) : Setup FirebaseDatabase instance
+        // TODO Firebase Remote Config (2) : Setup FirebaseRemoteConfig instance
     }
+
+    private void setupRealtimeDatabase() {
+        // TODO Firebase Database (4) : Get reference from child with database reference key
+        // TODO Firebase Database (5) : Add child event listener
+        // TODO Firebase Database (6) : Add value event listener
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // TODO Firebase Database (7) : Remove child event listener
+    }
+
+    // TODO Firebase Database (8) : Create ValueEventListener and remove value event listener when onDataChange was called then hide loading dialog. If cancelled show popup message with something error in realtime database message
+    // TODO Firebase Database (9) : Create ChildEventListener and call addMessageData when onChildAdded. If onChildRemoved was called, remove message by data snapshot key. If cancelled show popup message with something error in realtime database message
+
 
     private void setupRemoteConfig() {
         // TODO Firebase Remote Config (3) : Create FirebaseRemoteConfigSettings from builder and enable developer mode
         // TODO Firebase Remote Config (4) : Setup config settings and defaults with xml resource
         // TODO Firebase Remote Config (5) : Fetch config from Firebase Server. If success, Activated fetched config and update special user feature
     }
-
-    private void setupRealtimeDatabase() {
-        // TODO Firebase Database (3) : Get reference from child with database reference key
-        // TODO Firebase Database (4) : Add value event listener
-        // TODO Firebase Database (5) : Add child event listener
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        // TODO Firebase Database (6) : Remove child event listener
-    }
-
-    // TODO Firebase Database (7) : Create ValueEventListener and remove value event listener when onDataChange was called then hide loading dialog. If cancelled show popup message with something error in realtime database message
-    // TODO Firebase Database (8) : Create ChildEventListener and call addMessageData when onChildAdded. If onChildRemoved was called, remove message by data snapshot key. If cancelled show popup message with something error in realtime database message
 
     private void addMessageData(String key, Message message) {
         MessageData messageData = new MessageData(key, message);
@@ -138,15 +140,6 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         removeMessageItemByPosition(position);
     }
 
-    private void removeMessageItemByPosition(int position) {
-        // TODO Firebase Database (9) : Get database reference from child by key then remove it with removeValue()
-    }
-
-    private void updateMessageView() {
-        messageAdapter.notifyDataSetChanged();
-        rvMessage.smoothScrollToPosition(rvMessage.getAdapter().getItemCount());
-    }
-
     private void sendMessage(String message) {
         if (Utility.isMessageValidated(message)) {
             etMessage.setText("");
@@ -155,19 +148,24 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
         }
     }
 
-    private void addNewMessage(String message) {
-        Message messageData = new Message(message, getCurrentUserEmail());
+    private void addNewMessage(String text) {
+        Message message = new Message(text, getCurrentUserEmail());
         // TODO Firebase Database (10) : Add message with push() and set message data value
+    }
+
+    private void removeMessageItemByPosition(int position) {
+        // TODO Firebase Database (11) : Get database reference from child by key then remove it with removeValue()
+    }
+
+    private void updateMessageView() {
+        messageAdapter.notifyDataSetChanged();
+        rvMessage.smoothScrollToPosition(rvMessage.getAdapter().getItemCount());
     }
 
     private void signOut() {
         EventTrackerManager.onLogout(this, getCurrentUserEmail());
         // TODO Firebase Auth (3) : Sign out
         goToLogin();
-    }
-
-    private void goToLogin() {
-        openActivity(LoginActivity.class);
     }
 
     private void checkUserAuthentication() {
@@ -204,5 +202,9 @@ public class ChatRoomActivity extends BaseActivity implements View.OnClickListen
             messageAdapter.setSpecialUser(isSpecialUser);
             messageAdapter.notifyDataSetChanged();
         }
+    }
+
+    private void goToLogin() {
+        openActivity(LoginActivity.class);
     }
 }
