@@ -45,8 +45,24 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         // TODO Firebase Auth (2) : Setup FirebaseAuth instance
     }
 
+    private void signUp(@NonNull String username, @NonNull String password) {
+        if (isUsernameAndPasswordValidated(username, password)) {
+            showLoadingDialog();
+
+            // TODO Firebase Auth (3) : Create user with email and password. If success, check user available then dismiss dialog and go to chat room. If failure, dismiss dialog and show error with bottom message (snackbar)
+        }
+    }
+
+    private void signIn(@NonNull String username, @NonNull String password) {
+        if (isUsernameAndPasswordValidated(username, password)) {
+            showLoadingDialog();
+
+            // TODO Firebase Auth (4) : Sign in with email and password. If success, check user available then dismiss dialog and go to chat room. If failure, dismiss dialog and show error with bottom message (snackbar)
+        }
+    }
+
     private void checkAlreadyLoggedIn() {
-        // TODO Firebase Auth (3) : Check current user and open chat room if current user is available
+        // TODO Firebase Auth (5) : Check current user and open chat room if current user is available
         if (true) {
             goToChatRoom();
         }
@@ -63,22 +79,6 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
             String username = etUsername.getText().toString();
             String password = etPassword.getText().toString();
             signUp(username, password);
-        }
-    }
-
-    private void signUp(@NonNull String username, @NonNull String password) {
-        if (isUsernameAndPasswordValidated(username, password)) {
-            showLoadingDialog();
-
-            // TODO Firebase Auth (4) : Create user with email and password. If success, check user available then dismiss dialog and go to chat room. If failure, dismiss dialog and show error with bottom message (snackbar)
-        }
-    }
-
-    private void signIn(@NonNull String username, @NonNull String password) {
-        if (isUsernameAndPasswordValidated(username, password)) {
-            showLoadingDialog();
-
-            // TODO Firebase Auth (5) : Sign in with email and password. If success, check user available then dismiss dialog and go to chat room. If failure, dismiss dialog and show error with bottom message (snackbar)
         }
     }
 
